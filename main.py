@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    dataset_path = args.raw_dataset_path
+    dataset_path = args.dataset_path
     regions = args.regions
     output_path = args.output_path
 
