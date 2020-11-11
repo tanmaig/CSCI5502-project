@@ -2,3 +2,4 @@
 /creds.json
 .idea
 __pycache__/
+/glove.twitter.27B.25d.txt
