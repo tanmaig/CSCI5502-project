@@ -4,6 +4,8 @@ import json
 from util import determine_regions, exists, read_datasets
 import isodate
 from tqdm import tqdm
+from nested_lookup import nested_lookup
+
 
 
 def scrape_duration(video_id, api_key):
@@ -17,8 +19,10 @@ def scrape_duration(video_id, api_key):
     response = requests.get(search_url)
     content = json.loads(response.text)
     try:
-        duration = content["items"][0]["contentDetails"]["duration"]
-        duration = isodate.parse_duration(duration).total_seconds()
+        #duration = content
+        duration = nested_lookup("duration", content)
+        #duration = content["items"][0]["contentDetails"]["duration"]
+        #duration = isodate.parse_duration(duration).total_seconds()
     except Exception as e:
         pass
         duration = None
@@ -58,9 +62,12 @@ if __name__ == "__main__":
     api_key = data["api_key"]
 
     for region, dataset in region_wise_datasets.items():
-        dataset.drop_duplicates(inplace=True)
+        unique_videos = dataset[["video_id"]]
+        unique_videos = unique_videos.head(1)
+        unique_videos.drop_duplicates(inplace=True)
         tqdm.pandas()
-        dataset["duration"] = dataset["video_id"].progress_apply(scrape_duration, args=(api_key,))
-        print(dataset["duration"].isna().sum())
+        unique_videos["duration"] = unique_videos["video_id"].progress_apply(scrape_duration, args=(api_key,))
+        print(unique_videos["duration"].isna().sum())
         print("Writing results for region \"" + region + "\" to file..")
+        dataset = dataset.merge(unique_videos, how='left', on='video_id')
         dataset.to_csv(input_path + "/" + region + ".csv", index=False)
