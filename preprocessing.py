@@ -1,12 +1,14 @@
 import pandas as pd
-import argparse
 import numpy as np
 import re
-import nltk
+import argparse
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 from util import write_pickle_file, exists, determine_regions, read_datasets
 
 
@@ -150,13 +152,19 @@ def feature_generation(dataset, embeddings_dict):
     :return: Dataset (Dataframe) containing generated features.
     """
     # Feature 1: time_gap = No. of days between publishing date and trending date.
-    trending_date = pd.to_datetime(dataset["trending_date"].head(), format="%y.%d.%m").dt.date
-    publish_date = pd.to_datetime(dataset["publish_time"].head()).dt.date
+    trending_date = pd.to_datetime(dataset["trending_date"], format="%y.%d.%m").dt.date
+    publish_date = pd.to_datetime(dataset["publish_time"]).dt.date
     dataset["time_gap"] = (trending_date - publish_date).dt.days
 
     # Feature 2, 3, 4: title, tags, description - NLP features
-    dataset = dataset.apply(text_preprocessing, axis=1)
-    dataset = dataset.apply(embedding, args=(embeddings_dict,), axis=1)
+    try: # Exception handling - in case anyone faces any issues with tqdm installation / usage.
+        tqdm.pandas()
+        dataset = dataset.progress_apply(text_preprocessing, axis=1)
+        dataset = dataset.progress_apply(embedding, args=(embeddings_dict,), axis=1)
+    except Exception as e:
+        pass
+        dataset = dataset.apply(text_preprocessing, axis=1)
+        dataset = dataset.apply(embedding, args=(embeddings_dict,), axis=1)
 
     # Feature 5: category_id : Same categories used in all regions (labelled from 1 to 44: 3 to 10 missing). (Should intercept be added?)
     # Feature 6: duration : This will be considered, if present.
@@ -164,9 +172,45 @@ def feature_generation(dataset, embeddings_dict):
     features_list = ["video_id", "time_gap", "title", "tags", "description", "category_id"]
     if "duration" in dataset.columns:
         features_list.append("duration")
-    dataset = dataset[features_list]
+    cols = features_list + ["label"]
+    dataset = dataset[cols]
     return dataset
 
+
+def pca(X_train, X_test, output_folder, visualize=False, trasnform=True):
+    """
+    Description: Perform PCA analysis on train / test sets.
+    :param X_train: Training set features
+    :param X_test: Test set features
+    :param visualize: PCA analysis
+    :param transform: Perform PCA dimensionality reduction.
+    :param output_folder: Output folder to save analysis results.
+    :return: Trasformed train and test sets.
+    """
+
+    # Standard scalar normalization.
+    sc = StandardScaler()
+    X_train_scaled = sc.fit_transform(X_train)
+    X_test_scaled = sc.transform(X_test)
+
+    # Apply PCA.
+    pca = PCA(0.95)
+    transformed_data = pca.fit_transform(X_train_scaled)
+    print("Estimated no. of components = ", pca.n_components_)
+
+    if visualize:
+        plt.clf()
+        plt.plot(np.cumsum(pca.explained_variance_ratio_))
+        plt.xlabel('number of components')
+        plt.ylabel('cumulative explained variance')
+        plt.savefig(output_folder + "/PCA_analysis.png")
+
+    if trasnform:
+        X_train_transformed = transformed_data
+        X_test_transformed = pca.transform(X_test_scaled)
+        return X_train_transformed, X_test_transformed
+
+    return None
 
 if __name__ == '__main__':
 
@@ -229,3 +273,42 @@ if __name__ == '__main__':
 
     # Going forward, ndarray would be suitable for input to most models instead of dataframe, I think.
     print(dataset.head())
+    print(dataset.shape)
+    print(dataset.dtypes)
+    print(dataset.isna().sum())
+
+    # Splitting title, tags and description compound features into individual features.
+    for col in ["title", "tags", "description"]:
+        temp = dataset[col].apply(pd.Series)
+        temp.columns = [col + "_" + str(i) for i in range(0, 25)]
+        dataset.drop(columns=[col], inplace=True)
+        dataset = pd.concat([dataset, temp], axis=1)
+        del temp
+
+    # Convert all features into float64 dtype for consistency purposes.
+    dataset[dataset.columns[~dataset.columns.isin(["video_id"])]] = dataset[
+        dataset.columns[~dataset.columns.isin(["video_id"])]].apply(np.float64)
+
+    # Splitting the dataset into the Training set and Test set.
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(dataset[dataset.columns[~dataset.columns.isin(["label"])]],
+                                                        dataset["label"],
+                                                        test_size=0.2,
+                                                        random_state=0)
+
+    train = pd.concat([X_train, y_train], axis=1)
+    test = pd.concat([X_test, y_test], axis=1)
+    del dataset, X_train, X_test, y_train, y_test
+
+    # Writing to pickle files so preprocessed dataset can be directly utilized going forward.
+    write_pickle_file(train, output_path + "/train.pkl")
+    write_pickle_file(test, output_path + "/test.pkl")
+
+    """# Example
+    # Dimensionality reduction using PCA. - Might have to change usage if Cross-validation is used.
+    train_input = train[train.columns[~train.columns.isin(["video_id"])]]
+    test_input = test[test.columns[~test.columns.isin(["video_id"])]]
+    train_out, test_out = pca(train_input,
+                      test_input,
+                      output_folder=output_path,
+                      visualize=True)"""

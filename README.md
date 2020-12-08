@@ -13,7 +13,7 @@ $ pip install -r requirements.txt
 For executing main pipeline, run:
 
 ```shell
-$ python main.py --dataset_path ./data --regions CA,US --output_path ./output
+$ python preprocessing.py --dataset_path ./data --regions CA,US --output_path ./output
 ```
 
 For scraping duration data using Youtube Data API, run:
