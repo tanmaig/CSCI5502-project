@@ -208,6 +208,9 @@ def pca(X_train, X_test, output_folder, visualize=False, trasnform=True):
     if trasnform:
         X_train_transformed = transformed_data
         X_test_transformed = pca.transform(X_test_scaled)
+        columns = ['f' + str(i) for i in range(pca.n_components_)]
+        X_train_transformed = pd.DataFrame(X_train_transformed, columns=columns, index=X_train_transformed.index)
+        X_test_transformed = pd.DataFrame(X_test_transformed, columns=columns, index=X_test_transformed.index)
         return X_train_transformed, X_test_transformed
 
     return None
@@ -289,6 +292,9 @@ if __name__ == '__main__':
     dataset[dataset.columns[~dataset.columns.isin(["video_id"])]] = dataset[
         dataset.columns[~dataset.columns.isin(["video_id"])]].apply(np.float64)
 
+    # Create one hot encoding for the column category_id
+    dataset = pd.get_dummies(dataset, columns=['category_id'], dummy_na=True, drop_first=True, prefix="category_")
+
     # Splitting the dataset into the Training set and Test set.
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(dataset[dataset.columns[~dataset.columns.isin(["label"])]],
@@ -300,23 +306,19 @@ if __name__ == '__main__':
     test = pd.concat([X_test, y_test], axis=1)
     del dataset, X_train, X_test, y_train, y_test
 
-    # Create one hot encoding for the column category_id
-    train = pd.get_dummies(train, columns=['category_id'], dummy_na=True, drop_first=True, prefix="category_")
-    test = pd.get_dummies(test, columns=['category_id'], dummy_na=True, drop_first=True, prefix="category_")
+    print(train.shape) # debugging
+    print(test.shape) # debugging
 
-    # Drop the column video id
-    train = train.drop(['video_id'], axis=1)
-    test = test.drop(['video_id'], axis=1)
+    # Dimensionality reduction using PCA. - Might have to change usage if Cross-validation is used.
+    train_out, test_out = pca(train[train.columns[~train.columns.isin(["video_id"])]],
+                              test[test.columns[~test.columns.isin(["video_id"])]],
+                              output_folder=output_path,
+                              visualize=True)
+
+    train = pd.concat([train[["video_id"]], train_out], axis=1)
+    test = pd.concat([test[["video_id"]], test_out], axis=1)
+    del train_out, test_out
 
     # Writing to pickle files so preprocessed dataset can be directly utilized going forward.
     write_pickle_file(train, output_path + "/train.pkl")
     write_pickle_file(test, output_path + "/test.pkl")
-
-    """# Example
-    # Dimensionality reduction using PCA. - Might have to change usage if Cross-validation is used.
-    train_input = train[train.columns[~train.columns.isin(["video_id"])]]
-    test_input = test[test.columns[~test.columns.isin(["video_id"])]]
-    train_out, test_out = pca(train_input,
-                      test_input,
-                      output_folder=output_path,
-                      visualize=True)"""

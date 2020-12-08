@@ -6,17 +6,18 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.dummy import DummyClassifier
 
 
 def tune_hyper_params(model, params, X_train, Y_train):
     """
-        Description: Function for hyperparameter tuning based on cross validation and gridsearch
-        :param model:  sklearn model whose hyper parameters need to be tuned based on cross validation
-        :param params: A dictionary with keys being the hyperparameter and the value being the list of
-                        parameters that need to explored
-        :param X_train: pandas training data frame
-        :param Y_train: pandas Series with true labels
-        :return: The best estimator based on hyper parameter tuning
+    Description: Function for hyperparameter tuning based on cross validation and gridsearch
+    :param model:  sklearn model whose hyper parameters need to be tuned based on cross validation
+    :param params: A dictionary with keys being the hyperparameter and the value being the list of
+                    parameters that need to explored
+    :param X_train: pandas training data frame
+    :param Y_train: pandas Series with true labels
+    :return: The best estimator based on hyper parameter tuning
     """
     clf = GridSearchCV(model, params, cv=10)
     clf.fit(X_train, Y_train)
@@ -25,17 +26,36 @@ def tune_hyper_params(model, params, X_train, Y_train):
 
 def evaluate_model(model, X_test, Y_true):
     """
-        Description: Function for evaluating model performance on test data
-        :param model:  sklearn model that needs to be testes
-        :param X_test: test data
-        :param Y_true: true labels corresponding to the test data
-        :return: accuracy, precision, recall, accuracy, fscore of the estimator on test data
+    Description: Function for evaluating model performance on test data
+    :param model:  sklearn model that needs to be testes
+    :param X_test: test data
+    :param Y_true: true labels corresponding to the test data
+    :return: accuracy, precision, recall, accuracy, fscore of the estimator on test data
     """
     Y_pred = model.predict(X_test)
     precision, recall, fscore, support = precision_recall_fscore_support(Y_true, Y_pred, average='macro')
     accuracy = accuracy_score(Y_true, Y_pred)
 
     return accuracy, precision, recall, accuracy, fscore
+
+
+def train_model(X_train, Y_train, choice, params):
+    """
+    Description: General function for building model specified by "model" param.
+    :param X_train: pandas training data frame
+    :param Y_train: pandas Series with true labels
+    :param choice: Choice of machine learning model to be used for training.
+    :param params: Dictionary containing range of parameter values for GridSearch hyper parameter tuning.
+    :return: Trained model object.
+    """
+    if choice == "decision_tree":
+        model = DecisionTreeClassifier()
+    elif choice == "SGD":
+        model = SGDClassifier()
+    elif choice == "MLP":
+        model = MLPClassifier()
+    model = tune_hyper_params(model, params, X_train, Y_train)
+    return model
 
 
 def train_decision_tree(X_train, Y_train):
@@ -84,7 +104,7 @@ def mlp(X_train, Y_train):
               'alpha': [0.001, 0.05, 0.5],
               'tol': ['1e-6', '1e-3', '1e-4', '1e-5'],
               'hidden_layer_sizes': [(6, 20), (100, 20)],
-              'max_iter': [100,200,500]
+              'max_iter': [100, 200, 500]
               }
     model = tune_hyper_params(model, params, X_train, Y_train)
     return model
@@ -96,8 +116,8 @@ if __name__ == "__main__":
     '''
     np.random.seed(10)
     train_df, test_df = ut.load_train_and_test_data('./output')
-    X_train, Y_train = train_df.drop(['label'], axis=1), train_df['label'].astype(str)
-    X_test, Y_test = test_df.drop(['label'], axis=1), test_df['label'].astype(str)
+    X_train, Y_train = train_df.drop(['video_id', 'label'], axis=1), train_df['label'].astype(str)
+    X_test, Y_test = test_df.drop(['video_id', 'label'], axis=1), test_df['label'].astype(str)
 
     cv_model = train_decision_tree(X_train, Y_train)
     ut.write_pickle_file(cv_model, './output/dt_model.pkl')
