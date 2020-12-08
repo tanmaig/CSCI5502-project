@@ -14,17 +14,17 @@ from util import write_pickle_file, exists, determine_regions, read_datasets
 
 def data_cleaning(region_wise_datasets):
     """
-    Description: Function for data cleaning (missing value / null imputation, removing duplicate rows). This is not
-    generalized for now. This is only for Description column as this is the only column that seems to contain null
-    values in all datasets.
+    Description: Function for data cleaning (missing value / null imputation, removing duplicate rows and videos no longer available).
     :param region_wise_datasets: Dictionary containing keys as region codes (strings) and values as corresponding
     datasets (dataframes).
     :return: region_wise_datasets dictionary with cleaned datasets for each entry.
     """
     for region, dataset in region_wise_datasets.items():
         dataset.drop_duplicates(inplace=True) # Drop duplicate instances.
-        dataset.reset_index(drop=True, inplace=True)
         dataset["description"].fillna("", inplace=True)
+        dataset.dropna(inplace=True)  # Drop rows with nan values in any columns.
+        dataset = dataset[dataset["video_error_or_removed"] == False]
+        dataset.reset_index(drop=True, inplace=True)
         region_wise_datasets[region] = dataset
     return region_wise_datasets
 
@@ -212,6 +212,7 @@ def pca(X_train, X_test, output_folder, visualize=False, trasnform=True):
 
     return None
 
+
 if __name__ == '__main__':
 
     # Load command line arguments
@@ -255,9 +256,8 @@ if __name__ == '__main__':
     # data analysis.
     write_pickle_file(region_wise_datasets, output_path + "/cleaned_data.pkl")
 
-
     # Step 3: Consolidating US and Canada data sets into a single data set
-    dataset = pd.concat([region_wise_datasets['US'],region_wise_datasets['CA']], ignore_index=True)
+    dataset = pd.concat([region_wise_datasets['US'], region_wise_datasets['CA']], ignore_index=True)
 
     # Deleting the Dictionary because it's no longer in use.
     del region_wise_datasets
