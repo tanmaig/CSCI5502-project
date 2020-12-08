@@ -47,7 +47,7 @@ def determine_regions(x):
     :return: List of region codes (strings)
     """
     if x == "all":
-        x = "CA,DE,FR,GB,IN,JP,KR,MX,RU,US.csv"
+        x = "CA,DE,FR,GB,IN,JP,KR,MX,RU,US"
     x = x.split(",")
     return x
 
