@@ -60,7 +60,13 @@ def sgd(X_train, Y_train):
         :return: sklearn Stochastic Gradient Descent model.
     """
     model = SGDClassifier()
-    params = {}
+    params = {
+        'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3],  # learning rate
+        'max_iter': [5000, 10000],  # number of epochs
+        'loss': ['modified_huber'],
+        'penalty': ['l2'],
+        'tol': ['1e-6', '1e-3', '1e-4', '1e-5']
+    }
     model = tune_hyper_params(model, params, X_train, Y_train)
     return model
 
@@ -73,7 +79,13 @@ def mlp(X_train, Y_train):
         :return: sklearn Multi layer Perceptron model.
     """
     model = MLPClassifier()
-    params = {}
+    params = {'solver': ['adam', 'sgd'],
+              'activation': ['logistic', 'relu', 'tanh'],
+              'alpha': [0.001, 0.05, 0.5],
+              'tol': ['1e-6', '1e-3', '1e-4', '1e-5'],
+              'hidden_layer_sizes': [(6, 20), (100, 20)],
+              'max_iter': [100,200,500]
+              }
     model = tune_hyper_params(model, params, X_train, Y_train)
     return model
 
@@ -95,4 +107,3 @@ if __name__ == "__main__":
 
     cv_model = mlp(X_train, Y_train)
     ut.write_pickle_file(cv_model, './output/mlp_model.pkl')
-
