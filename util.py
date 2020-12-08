@@ -90,3 +90,18 @@ def read_pickle_file(file_path):
     with open(file_path, "rb") as f:
         obj = pickle.load(f)
     return obj
+
+
+def load_train_and_test_data(directory_path):
+    """
+        Description: Reads train.pkl and test.pkl contained in the directory_path
+        :param directory_path: Path to pickle file.
+        :return: Unpickled python traind and test dataframes
+    """
+    with open(directory_path+"/train.pkl", "rb") as f:
+        train_df = pickle.load(f)
+
+    with open(directory_path+"/test.pkl", "rb") as f:
+        test_df = pickle.load(f)
+
+    return train_df, test_df

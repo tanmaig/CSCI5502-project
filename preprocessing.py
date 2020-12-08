@@ -300,6 +300,14 @@ if __name__ == '__main__':
     test = pd.concat([X_test, y_test], axis=1)
     del dataset, X_train, X_test, y_train, y_test
 
+    # Create one hot encoding for the column category_id
+    train = pd.get_dummies(train, columns=['category_id'], dummy_na=True, drop_first=True, prefix="category_")
+    test = pd.get_dummies(test, columns=['category_id'], dummy_na=True, drop_first=True, prefix="category_")
+
+    # Drop the column video id
+    train = train.drop(['video_id'], axis=1)
+    test = test.drop(['video_id'], axis=1)
+
     # Writing to pickle files so preprocessed dataset can be directly utilized going forward.
     write_pickle_file(train, output_path + "/train.pkl")
     write_pickle_file(test, output_path + "/test.pkl")
