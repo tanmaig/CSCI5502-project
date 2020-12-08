@@ -4,6 +4,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
+from sklearn.linear_model import SGDClassifier
+from sklearn.neural_network import MLPClassifier
 
 
 def tune_hyper_params(model, params, X_train, Y_train):
@@ -20,6 +22,7 @@ def tune_hyper_params(model, params, X_train, Y_train):
     clf.fit(X_train, Y_train)
     return clf
 
+
 def evaluate_model(model, X_test, Y_true):
     """
         Description: Function for evaluating model performance on test data
@@ -29,10 +32,11 @@ def evaluate_model(model, X_test, Y_true):
         :return: accuracy, precision, recall, accuracy, fscore of the estimator on test data
     """
     Y_pred = model.predict(X_test)
-    precision, recall, fscore, support  = precision_recall_fscore_support(Y_true, Y_pred, average='macro')
+    precision, recall, fscore, support = precision_recall_fscore_support(Y_true, Y_pred, average='macro')
     accuracy = accuracy_score(Y_true, Y_pred)
 
     return accuracy, precision, recall, accuracy, fscore
+
 
 def train_decision_tree(X_train, Y_train):
     """
@@ -42,9 +46,37 @@ def train_decision_tree(X_train, Y_train):
        :return: sklearn DecisionTree model.
     """
     model = DecisionTreeClassifier()
-    params = {'criterion': ['gini', 'entropy'], 'min_samples_split': [0.01, 0.05, 0.1], 'min_samples_leaf': [0.001, 0.005, 0.01], 'max_features': ["sqrt", 1.0]}
+    params = {'criterion': ['gini', 'entropy'], 'min_samples_split': [0.01, 0.05, 0.1],
+              'min_samples_leaf': [0.001, 0.005, 0.01], 'max_features': ["sqrt", 1.0]}
     model = tune_hyper_params(model, params, X_train, Y_train)
     return model
+
+
+def sgd(X_train, Y_train):
+    """
+        Description: Function for building Stochastic Gradient Descent Classifier (SGD) model
+        :param X_train: pandas training data frame
+        :param Y_train: pandas Series with true labels
+        :return: sklearn Stochastic Gradient Descent model.
+    """
+    model = SGDClassifier()
+    params = {}
+    model = tune_hyper_params(model, params, X_train, Y_train)
+    return model
+
+
+def mlp(X_train, Y_train):
+    """
+        Description: Function for building Multi layer Perceptron Classifier (SGD) model
+        :param X_train: pandas training data frame
+        :param Y_train: pandas Series with true labels
+        :return: sklearn Multi layer Perceptron model.
+    """
+    model = MLPClassifier()
+    params = {}
+    model = tune_hyper_params(model, params, X_train, Y_train)
+    return model
+
 
 if __name__ == "__main__":
     '''
@@ -57,3 +89,10 @@ if __name__ == "__main__":
 
     cv_model = train_decision_tree(X_train, Y_train)
     ut.write_pickle_file(cv_model, './output/dt_model.pkl')
+
+    cv_model = sgd(X_train, Y_train)
+    ut.write_pickle_file(cv_model, './output/sgd_model.pkl')
+
+    cv_model = mlp(X_train, Y_train)
+    ut.write_pickle_file(cv_model, './output/mlp_model.pkl')
+
