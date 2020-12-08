@@ -209,8 +209,8 @@ def pca(X_train, X_test, output_folder, visualize=False, trasnform=True):
         X_train_transformed = transformed_data
         X_test_transformed = pca.transform(X_test_scaled)
         columns = ['f' + str(i) for i in range(pca.n_components_)]
-        X_train_transformed = pd.DataFrame(X_train_transformed, columns=columns, index=X_train_transformed.index)
-        X_test_transformed = pd.DataFrame(X_test_transformed, columns=columns, index=X_test_transformed.index)
+        X_train_transformed = pd.DataFrame(X_train_transformed, columns=columns, index=X_train.index)
+        X_test_transformed = pd.DataFrame(X_test_transformed, columns=columns, index=X_test.index)
         return X_train_transformed, X_test_transformed
 
     return None
@@ -276,9 +276,6 @@ if __name__ == '__main__':
 
     # Going forward, ndarray would be suitable for input to most models instead of dataframe, I think.
     print(dataset.head())
-    print(dataset.shape)
-    print(dataset.dtypes)
-    print(dataset.isna().sum())
 
     # Splitting title, tags and description compound features into individual features.
     for col in ["title", "tags", "description"]:
@@ -300,7 +297,8 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(dataset[dataset.columns[~dataset.columns.isin(["label"])]],
                                                         dataset["label"],
                                                         test_size=0.2,
-                                                        random_state=0)
+                                                        random_state=0,
+                                                        stratify=dataset["label"])
 
     train = pd.concat([X_train, y_train], axis=1)
     test = pd.concat([X_test, y_test], axis=1)
