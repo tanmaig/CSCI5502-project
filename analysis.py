@@ -35,22 +35,13 @@ if __name__ == '__main__':
     y_test = test["label"]
 
     # Predict on test data.
-    results = pd.DataFrame({"Model": ["Baseline",
-                                      "Decision Tree",
-                                      "Stochastic Gradient Descent",
-                                      "Multi-Layer Perceptron",
-                                      "Random Forrest",
-                                      "Gradient Boosting"],
-                            "metrics": [evaluate_model(baseline_model, X_test, y_test),
-                                        evaluate_model(dt_model, X_test, y_test),
-                                        evaluate_model(sgd_model, X_test, y_test),
-                                        evaluate_model(mlp_model, X_test, y_test),
-                                        evaluate_model(rf_model, X_test, y_test),
-                                        evaluate_model(gb_model, X_test, y_test)]})
+    results = {"Baseline": evaluate_model(baseline_model, X_test, y_test),
+               "Decision Tree": evaluate_model(dt_model, X_test, y_test),
+               "Stochastic Gradient Descent": evaluate_model(sgd_model, X_test, y_test),
+               "Multi-Layer Perceptron": evaluate_model(sgd_model, X_test, y_test),
+               "Random Forrest": evaluate_model(sgd_model, X_test, y_test),
+               "Gradient Boosting": evaluate_model(sgd_model, X_test, y_test)}
 
-    results["accuracy"] = results.apply(lambda x: x["metrics"][0])
-    results["precision"] = results.apply(lambda x: x["metrics"][1])
-    results["recall"] = results.apply(lambda x: x["metrics"][2])
-    results["support"] = results.apply(lambda x: x["metrics"][3])
-    results["fscore"] = results.apply(lambda x: x["metrics"][4])
-    results.drop(columns=["metrics"], inplace=True)
+    for model, metrics_table in results.items():
+        print("Results for " + model + ":")
+        print(metrics_table)
