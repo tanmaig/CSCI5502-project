@@ -308,13 +308,13 @@ if __name__ == '__main__':
     print(test.shape) # debugging
 
     # Dimensionality reduction using PCA. - Might have to change usage if Cross-validation is used.
-    train_out, test_out = pca(train[train.columns[~train.columns.isin(["video_id"])]],
-                              test[test.columns[~test.columns.isin(["video_id"])]],
+    train_out, test_out = pca(train[train.columns[~train.columns.isin(["video_id", "label"])]],
+                              test[test.columns[~test.columns.isin(["video_id", "label"])]],
                               output_folder=output_path,
                               visualize=True)
 
-    train = pd.concat([train[["video_id"]], train_out], axis=1)
-    test = pd.concat([test[["video_id"]], test_out], axis=1)
+    train = pd.concat([train[["video_id", "label"]], train_out], axis=1)
+    test = pd.concat([test[["video_id", "label"]], test_out], axis=1)
     del train_out, test_out
 
     # Writing to pickle files so preprocessed dataset can be directly utilized going forward.
