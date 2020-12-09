@@ -9,6 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import math
 from util import write_pickle_file, exists, determine_regions, read_datasets
 
 
@@ -43,8 +44,8 @@ def label_generation(dataset):
     :param dataset: Dataframe containing condolidated region wise dataset.
     :return: Labels (pd.Series)
     """
-    labels = dataset.apply(lambda x: (x["likes"] - 1.5*x["dislikes"])*(x["comment_count"]/x["views"]), axis=1)
-    labels = labels.apply(lambda x: 1 if x < 0 else (2 if x >= 0 and x < 300 else 3))
+    labels = dataset.apply(lambda x: np.nan if x["views"] < 100000 else (x["likes"] - 1.5*x["dislikes"])*(x["comment_count"]/x["views"]), axis=1)
+    labels = labels.apply(lambda x: 0 if math.isnan(x) else (1 if x < 0 else (2 if x >= 0 and x < 300 else 3)))
     return labels
 
 
@@ -268,6 +269,9 @@ if __name__ == '__main__':
 
     # Generate labels using score function.
     dataset["label"] = label_generation(dataset)
+
+    # Testing
+    print(dataset["label"].value_counts())
 
     # Feature generation: Generate base features and derived features.
     # For the language features, we need to transform them into features of numerical form
