@@ -59,61 +59,8 @@ def train_model(X_train, Y_train, choice, params):
         model = RandomForestClassifier(max_features='sqrt')
     elif choice == "GB":
         model = GradientBoostingClassifier(max_features='sqrt')
-
-
-
-    model = tune_hyper_params(model, params, X_train, Y_train)
-    return model
-
-
-def train_decision_tree(X_train, Y_train):
-    """
-       Description: Function for building DecisionTreeClassifier model
-       :param X_train: pandas training data frame
-       :param Y_train: pandas Series with true labels
-       :return: sklearn DecisionTree model.
-    """
-    model = DecisionTreeClassifier()
-    params = {'criterion': ['gini', 'entropy'], 'min_samples_split': [0.01, 0.05, 0.1],
-              'min_samples_leaf': [0.001, 0.005, 0.01], 'max_features': ["sqrt", 1.0]}
-    model = tune_hyper_params(model, params, X_train, Y_train)
-    return model
-
-
-def sgd(X_train, Y_train):
-    """
-        Description: Function for building Stochastic Gradient Descent Classifier (SGD) model
-        :param X_train: pandas training data frame
-        :param Y_train: pandas Series with true labels
-        :return: sklearn Stochastic Gradient Descent model.
-    """
-    model = SGDClassifier()
-    params = {
-        'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3],  # learning rate
-        'max_iter': [5000, 10000],  # number of epochs
-        'loss': ['modified_huber'],
-        'penalty': ['l2'],
-        'tol': ['1e-6', '1e-3', '1e-4', '1e-5']
-    }
-    model = tune_hyper_params(model, params, X_train, Y_train)
-    return model
-
-
-def mlp(X_train, Y_train):
-    """
-        Description: Function for building Multi layer Perceptron Classifier (SGD) model
-        :param X_train: pandas training data frame
-        :param Y_train: pandas Series with true labels
-        :return: sklearn Multi layer Perceptron model.
-    """
-    model = MLPClassifier()
-    params = {'solver': ['adam', 'sgd'],
-              'activation': ['logistic', 'relu', 'tanh'],
-              'alpha': [0.001, 0.05, 0.5],
-              'tol': ['1e-6', '1e-3', '1e-4', '1e-5'],
-              'hidden_layer_sizes': [(6, 20), (100, 20)],
-              'max_iter': [100, 200, 500]
-              }
+    else:
+        model = DummyClassifier()
     model = tune_hyper_params(model, params, X_train, Y_train)
     return model
 
@@ -127,11 +74,40 @@ if __name__ == "__main__":
     X_train, Y_train = train_df.drop(['video_id', 'label'], axis=1), train_df['label'].astype(str)
     X_test, Y_test = test_df.drop(['video_id', 'label'], axis=1), test_df['label'].astype(str)
 
-    cv_model = train_decision_tree(X_train, Y_train)
+    params = {}
+    cv_model = train_model(X_train, Y_train, "baseline", params)
+    ut.write_pickle_file(cv_model, './output/baseline_model.pkl')
+
+    params = {'criterion': ['gini', 'entropy'], 'min_samples_split': [0.01, 0.05, 0.1],
+              'min_samples_leaf': [0.001, 0.005, 0.01], 'max_features': ["sqrt", 1.0]}
+    cv_model = train_model(X_train, Y_train, "DT", params)
     ut.write_pickle_file(cv_model, './output/dt_model.pkl')
 
-    cv_model = sgd(X_train, Y_train)
+    params = {
+        'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3],  # learning rate
+        'max_iter': [5000, 10000],  # number of epochs
+        'loss': ['modified_huber'],
+        'penalty': ['l2'],
+        'tol': ['1e-6', '1e-3', '1e-4', '1e-5']
+    }
+    cv_model = train_model(X_train, Y_train, "SGD", params)
     ut.write_pickle_file(cv_model, './output/sgd_model.pkl')
 
-    cv_model = mlp(X_train, Y_train)
+    params = {'solver': ['adam', 'sgd'],
+              'activation': ['logistic', 'relu', 'tanh'],
+              'alpha': [0.001, 0.05, 0.5],
+              'tol': ['1e-6', '1e-3', '1e-4', '1e-5'],
+              'hidden_layer_sizes': [(6, 20), (100, 20)],
+              'max_iter': [100, 200, 500]
+              }
+    cv_model = train_model(X_train, Y_train, "MLP", params)
     ut.write_pickle_file(cv_model, './output/mlp_model.pkl')
+
+    params = {'n_estimators': [100, 500, 1000, 10000], 'min_samples_split': [0.01, 0.05, 0.1], 'min_samples_leaf': [0.001, 0.005, 0.01]}
+    cv_model = train_model(X_train, Y_train, "RF", params)
+    ut.write_pickle_file(cv_model, './output/rf_model.pkl')
+
+    params = {'n_estimators': [100, 500, 1000, 10000], 'loss': ['deviance', 'exponential'],
+              'learning_rate': [0.01, 0.05, 0.1, 0.5], 'subsample': [0.9, 0.85]}
+    cv_model = train_model(X_train, Y_train, "GB", params)
+    ut.write_pickle_file(cv_model, './output/gb_model.pkl')
