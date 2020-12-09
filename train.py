@@ -39,6 +39,17 @@ def evaluate_model(model, X_test, Y_true):
 
     return accuracy, precision, recall, accuracy, fscore
 
+def get_class_weight_dict(Y_train):
+    """
+       Description: Assign class weights to outcome variable
+       :param Y_train: pandas Series corresponding to label
+       :return: A dictionary with class weights assigned
+    """
+    uq_values = Y_train.value_counts(sort=False).to_dict()
+    n = Y_train.shape[0]
+    for key, val in uq_values.items():
+        uq_values[key] = uq_values[key] / (1.0 * n)
+    return uq_values
 
 def train_model(X_train, Y_train, choice, params):
     """
@@ -49,16 +60,18 @@ def train_model(X_train, Y_train, choice, params):
     :param params: Dictionary containing range of parameter values for GridSearch hyper parameter tuning.
     :return: Trained model object.
     """
+    class_weights = get_class_weight_dict(Y_train)
+
     if choice == "DT":
-        model = DecisionTreeClassifier()
+        model = DecisionTreeClassifier(class_weight=class_weights)
     elif choice == "SGD":
-        model = SGDClassifier()
+        model = SGDClassifier(class_weight=class_weights)
     elif choice == "MLP":
-        model = MLPClassifier()
+        model = MLPClassifier(class_weights=class_weights)
     elif choice == "RF":
-        model = RandomForestClassifier(max_features='sqrt')
+        model = RandomForestClassifier(max_features='sqrt', class_weight=class_weights)
     elif choice == "GB":
-        model = GradientBoostingClassifier(max_features='sqrt')
+        model = GradientBoostingClassifier(max_features='sqrt', class_weights=class_weights)
     else:
         model = DummyClassifier()
     model = tune_hyper_params(model, params, X_train, Y_train)
