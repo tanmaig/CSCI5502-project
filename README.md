@@ -14,6 +14,8 @@ For executing main pipeline, run:
 
 ```shell
 $ python preprocessing.py --dataset_path ./Scraped_durationdata --regions CA,US --output_path ./output
+$ python train.py
+$ python analysis.py --output_path ./output
 ```
 
 For scraping duration data using Youtube Data API, run:
