@@ -19,7 +19,7 @@ if __name__ == '__main__':
     sgd_cv_model = read_pickle_file(output_path + "/sgd_model.pkl")
     mlp_cv_model = read_pickle_file(output_path + "/mlp_model.pkl")
     rf_cv_model = read_pickle_file(output_path + "/rf_model.pkl")
-    gb_cv_model = read_pickle_file(output_path + "/gb_model.pkl")
+    #gb_cv_model = read_pickle_file(output_path + "/gb_model.pkl")
 
     # Best models
     baseline_model = baseline_cv_model.best_estimator_
@@ -27,12 +27,13 @@ if __name__ == '__main__':
     sgd_model = sgd_cv_model.best_estimator_
     mlp_model = mlp_cv_model.best_estimator_
     rf_model = rf_cv_model.best_estimator_
-    gb_model = gb_cv_model.best_estimator_
+    #gb_model = gb_cv_model.best_estimator_
 
     # Read test data
     test = read_pickle_file(output_path + "/test.pkl")
-    X_test = test[test.columns[~test.columns.isin(["label"])]]
-    y_test = test["label"]
+    X_test = test[test.columns[~test.columns.isin(["label", "video_id"])]]
+    y_test = test["label"].astype(str)
+
 
     # Predict on test data.
     results = {"Baseline": evaluate_model(baseline_model, X_test, y_test),
@@ -45,3 +46,4 @@ if __name__ == '__main__':
     for model, metrics_table in results.items():
         print("Results for " + model + ":")
         print(metrics_table)
+

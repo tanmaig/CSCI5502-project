@@ -221,7 +221,8 @@ if __name__ == '__main__':
     # Load command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_path",
-                        required=True,
+                        required=False,
+                        default="./data",
                         help="Path to folder containing input datasets.")
     parser.add_argument("--regions",
                         default="all",
