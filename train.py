@@ -6,6 +6,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.dummy import DummyClassifier
 
 
@@ -48,12 +49,19 @@ def train_model(X_train, Y_train, choice, params):
     :param params: Dictionary containing range of parameter values for GridSearch hyper parameter tuning.
     :return: Trained model object.
     """
-    if choice == "decision_tree":
+    if choice == "DT":
         model = DecisionTreeClassifier()
     elif choice == "SGD":
         model = SGDClassifier()
     elif choice == "MLP":
         model = MLPClassifier()
+    elif choice == "RF":
+        model = RandomForestClassifier(max_features='sqrt')
+    elif choice == "GB":
+        model = GradientBoostingClassifier(max_features='sqrt')
+
+
+
     model = tune_hyper_params(model, params, X_train, Y_train)
     return model
 
